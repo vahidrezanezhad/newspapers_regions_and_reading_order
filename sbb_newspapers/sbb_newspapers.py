@@ -53,7 +53,7 @@ class sbb_newspapers:
         self.dir_models = dir_models
         self.kernel = np.ones((5, 5), np.uint8)
         self.model_page_dir = dir_models + '/model_page_mixed_best.h5'
-        self.model_region_dir_p = dir_models +'/model_layout_newspapers.h5'#'/model_main_home_5_soft_new.h5'#'/model_home_soft_5_all_data.h5' #'/model_main_office_long_soft.h5'#'/model_20_cat_main.h5'
+        self.model_region_dir_p = dir_models +'/model_ensemble_s.h5'#'/model_layout_newspapers.h5'#'/model_ensemble_s.h5'#'/model_main_home_5_soft_new.h5'#'/model_home_soft_5_all_data.h5' #'/model_main_office_long_soft.h5'#'/model_20_cat_main.h5'
         self.model_textline_dir = dir_models + '/model_textline_newspapers.h5'#'/model_hor_ver_home_trextline_very_good.h5'# '/model_hor_ver_1_great.h5'#'/model_curved_office_works_great.h5'
 
 
@@ -2642,13 +2642,18 @@ class sbb_newspapers:
             region_order_sub = ET.SubElement(region_order, 'OrderedGroup')
             
             region_order_sub.set('id',"ro357564684568544579089")
-    
+
+            indexer_region=0
+
             #args_sort=order_of_texts
             for vj in order_of_texts:
                 name="coord_text_"+str(vj)
                 name = ET.SubElement(region_order_sub, 'RegionRefIndexed')
-                name.set('index',str(order_of_texts[vj]) )
+
+                name.set('index',str(indexer_region) )
                 name.set('regionRef',id_of_texts[vj])
+                indexer_region+=1
+
     
     
             id_indexer=0
@@ -3383,7 +3388,7 @@ class sbb_newspapers:
         ##plt.plot(regions_without_seperators_0)
         ##plt.show()
 
-        sigma_=35
+        sigma_=35#70#35
 
 
         meda_n_updown=regions_without_seperators_0[len(regions_without_seperators_0)::-1]
@@ -3420,7 +3425,7 @@ class sbb_newspapers:
 
         peaks_neg, _ = find_peaks(zneg, height=0)
         peaks, _ = find_peaks(z, height=0)
-
+        
         peaks_neg=peaks_neg-10-10
 
 
@@ -3436,28 +3441,49 @@ class sbb_newspapers:
         interest_pos=z[peaks]
         
         interest_pos=interest_pos[interest_pos>10]
-
+        
+        
+        
+        #plt.plot(z)
+        #plt.show()
         interest_neg=z[peaks_neg]
+        
+
+        
+        
         min_peaks_pos=np.min(interest_pos)
+        max_peaks_pos=np.max(interest_pos)
+        
+        if max_peaks_pos/min_peaks_pos>=35:
+            min_peaks_pos=np.mean(interest_pos)
+            
         min_peaks_neg=0#np.min(interest_neg)
         
+        #print(np.min(interest_pos),np.max(interest_pos),np.max(interest_pos)/np.min(interest_pos),'minmax')
         #$print(min_peaks_pos)
         dis_talaei=(min_peaks_pos-min_peaks_neg)/multiplier
         #print(interest_pos)
         grenze=min_peaks_pos-dis_talaei#np.mean(y[peaks_neg[0]:peaks_neg[len(peaks_neg)-1]])-np.std(y[peaks_neg[0]:peaks_neg[len(peaks_neg)-1]])/2.0
-
+        
+        #print(interest_neg,'interest_neg')
+        #print(grenze,'grenze')
+        #print(min_peaks_pos,'min_peaks_pos')
+        #print(dis_talaei,'dis_talaei')
+        #print(peaks_neg,'peaks_neg')
+        
         interest_neg_fin=interest_neg[(interest_neg<grenze)]
         peaks_neg_fin=peaks_neg[(interest_neg<grenze)]
-        interest_neg_fin=interest_neg[(interest_neg<grenze)]
+        #interest_neg_fin=interest_neg[(interest_neg<grenze)]
 
         num_col=(len(interest_neg_fin))+1
-
-
+        
+        #print(peaks_neg_fin,'peaks_neg_fin')
+        #print(num_col,'diz')
         p_l=0
         p_u=len(y)-1
         p_m=int(len(y)/2.)
-        p_g_l=int(len(y)/3.)
-        p_g_u=len(y)-int(len(y)/3.)
+        p_g_l=int(len(y)/4.)
+        p_g_u=len(y)-int(len(y)/4.)
 
         if num_col==3:
             if (peaks_neg_fin[0]>p_g_u and peaks_neg_fin[1]>p_g_u) or (peaks_neg_fin[0]<p_g_l and peaks_neg_fin[1]<p_g_l ) or ((peaks_neg_fin[0]+200)<p_m and peaks_neg_fin[1]<p_m ) or ((peaks_neg_fin[0]-200)>p_m and peaks_neg_fin[1]>p_m ):
@@ -3474,7 +3500,7 @@ class sbb_newspapers:
                 pass
 
 
-
+        ##print(len(peaks_neg_fin))
 
         
 
@@ -3484,6 +3510,8 @@ class sbb_newspapers:
         cut_off=400
         peaks_neg_true=[]
         forest=[]
+        
+        #print(len(peaks_neg_fin),'len_')
         
         for i in range(len(peaks_neg_fin)):
             if i==0:
@@ -3507,12 +3535,13 @@ class sbb_newspapers:
         p_l=0
         p_u=len(y)-1
         p_m=int(len(y)/2.)
-        p_quarter=int(len(y)/4.)
-        p_g_l=int(len(y)/3.)
-        p_g_u=len(y)-int(len(y)/3.)
+        p_quarter=int(len(y)/5.)
+        p_g_l=int(len(y)/4.)
+        p_g_u=len(y)-int(len(y)/4.)
         
         p_u_quarter=len(y)-p_quarter
-
+        
+        ##print(num_col,'early')
         if num_col==3:
             if (peaks_neg_true[0]>p_g_u and peaks_neg_true[1]>p_g_u) or (peaks_neg_true[0]<p_g_l and peaks_neg_true[1]<p_g_l ) or (peaks_neg_true[0]<p_m and (peaks_neg_true[1]+200)<p_m ) or ( (peaks_neg_true[0]-200)>p_m and peaks_neg_true[1]>p_m ):
                 num_col=1
@@ -3563,7 +3592,7 @@ class sbb_newspapers:
         #plt.plot([0,len(y)], [grenze,grenze])
         #plt.show()
             
-        #print(peaks_neg_fin_new)
+        ##print(len(peaks_neg_true))
         return len(peaks_neg_true), peaks_neg_true
     
     def find_new_features_of_contoures(self,contours_main):
@@ -6074,6 +6103,8 @@ class sbb_newspapers:
             ##plt.show()
             
             #num_col, peaks_neg_fin=self.find_num_col(regions_without_seperators_teil,multiplier=6.0)
+            
+            #regions_without_seperators_teil=cv2.erode(regions_without_seperators_teil,kernel,iterations = 3)
             num_col, peaks_neg_fin=self.find_num_col(regions_without_seperators_teil,multiplier=7.0)
             
             if num_col>num_col_fin:
@@ -6278,7 +6309,7 @@ class sbb_newspapers:
     def run(self):
         
         #get image and sclaes, then extract the page of scanned image
-
+        t1=time.time()
         self.get_image_and_scales()
         
         ###self.produce_groundtruth_for_textline()
@@ -6328,9 +6359,12 @@ class sbb_newspapers:
         img_only_regions_with_sep=img_only_regions_with_sep.astype(np.uint8)
         img_only_regions = cv2.erode(img_only_regions_with_sep[:,:], self.kernel, iterations=6)
         
-
+        
+        ##plt.imshow(img_only_regions)
+        ##plt.show()
         num_col, peaks_neg_fin=self.find_num_col(img_only_regions,multiplier=6.0)
         
+        ###print(num_col,'num_col')
 
         
         textline_mask_tot[mask_images[:,:]==1]=0
@@ -6360,18 +6394,20 @@ class sbb_newspapers:
         
         text_regions_p=np.array(text_regions_p)
         
-        t3=time.time()
         
-        regions_without_seperators=( (text_regions_p[:,:]==1) | (text_regions_p[:,:]==2) )*1 #self.return_regions_without_seperators_new(text_regions_p[:,:,0],img_only_regions)
+        
+        regions_without_seperators=(text_regions_p[:,:]==1)*1#( (text_regions_p[:,:]==1) | (text_regions_p[:,:]==2) )*1 #self.return_regions_without_seperators_new(text_regions_p[:,:,0],img_only_regions)
 
         
 
         num_col,peaks_neg_fin,matrix_of_lines_ch,spliter_y_new,seperators_closeup_n=self.find_number_of_columns_in_document(np.repeat(text_regions_p[:, :, np.newaxis], 3, axis=2))
         
+        ##print(peaks_neg_fin,num_col,'num_col2')
+        
         
         boxes=self.return_boxes_of_images_by_order_of_reading_new(spliter_y_new,regions_without_seperators,matrix_of_lines_ch)
         
-        
+        ##print(len(boxes),'boxes')
         img_revised_tab=text_regions_p[:,:]
         
 
@@ -6534,6 +6570,7 @@ class sbb_newspapers:
 
         self.write_into_page_xml(contours_only_text_parent,page_coord,self.dir_out , order_text_new , id_of_texts_tot,all_found_texline_polygons,
                                  all_box_coord,polygons_of_images )
+        print('Job done in: '+str(time.time()-t1))
         
 
 
