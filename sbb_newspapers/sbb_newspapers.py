@@ -52,8 +52,15 @@ class sbb_newspapers:
                 self.f_name = self.f_name.split('.')[0]
         self.dir_models = dir_models
         self.kernel = np.ones((5, 5), np.uint8)
+        
+        self.model_region_dir_p = dir_models +'/model_main_covid_19_many_scalin_down_lr5-5_the_best.h5'#'/model_main_covid19_lr5-5_scale_1_1_great.h5'#'/model_main_scale_1_1und_1_2_corona_great.h5'
+        #self.model_region_dir_p_ens = dir_models +'/model_ensemble_s.h5'#'/model_main_covid19_lr5-5_scale_1_1_great.h5'#'/model_main_scale_1_1und_1_2_corona_great.h5'
+        self.model_region_dir_p2 = dir_models +'/model_main_home_corona3_rot.h5'
+        
+        
         self.model_page_dir = dir_models + '/model_page_mixed_best.h5'
-        self.model_region_dir_p = dir_models +'/model_ensemble_s.h5'#'/model_layout_newspapers.h5'#'/model_ensemble_s.h5'#'/model_main_home_5_soft_new.h5'#'/model_home_soft_5_all_data.h5' #'/model_main_office_long_soft.h5'#'/model_20_cat_main.h5'
+        self.model_region_dir_p_ens = dir_models +'/model_ensemble_s.h5'
+        ###self.model_region_dir_p = dir_models +'/model_layout_newspapers.h5'#'/model_ensemble_s.h5'#'/model_layout_newspapers.h5'#'/model_ensemble_s.h5'#'/model_main_home_5_soft_new.h5'#'/model_home_soft_5_all_data.h5' #'/model_main_office_long_soft.h5'#'/model_20_cat_main.h5'
         self.model_textline_dir = dir_models + '/model_textline_newspapers.h5'#'/model_hor_ver_home_trextline_very_good.h5'# '/model_hor_ver_1_great.h5'#'/model_curved_office_works_great.h5'
 
 
@@ -2363,7 +2370,7 @@ class sbb_newspapers:
             y_min_main=np.array([np.min(contours_main[j][:,0,1]) for j in range(len(contours_main))])
             y_max_main=np.array([np.max(contours_main[j][:,0,1]) for j in range(len(contours_main))])
 
-
+        
         
         if contours_main!=None:
             indexer_main=np.array(range(len(contours_main)))
@@ -2645,7 +2652,7 @@ class sbb_newspapers:
 
             indexer_region=0
 
-            #args_sort=order_of_texts
+
             for vj in order_of_texts:
                 name="coord_text_"+str(vj)
                 name = ET.SubElement(region_order_sub, 'RegionRefIndexed')
@@ -2653,6 +2660,7 @@ class sbb_newspapers:
                 name.set('index',str(indexer_region) )
                 name.set('regionRef',id_of_texts[vj])
                 indexer_region+=1
+
 
     
     
@@ -3602,16 +3610,23 @@ class sbb_newspapers:
         cx_main=[(M_main[j]['m10']/(M_main[j]['m00']+1e-32)) for j in range(len(M_main))]
         cy_main=[(M_main[j]['m01']/(M_main[j]['m00']+1e-32)) for j in range(len(M_main))]
         x_min_main=np.array([np.min(contours_main[j][:,0,0]) for j in range(len(contours_main))])
+        
+        argmin_x_main=np.array([np.argmin(contours_main[j][:,0,0]) for j in range(len(contours_main))])
+        
+        x_min_from_argmin=np.array([contours_main[j][argmin_x_main[j],0,0] for j in range(len(contours_main))])
+        y_corr_x_min_from_argmin=np.array([contours_main[j][argmin_x_main[j],0,1] for j in range(len(contours_main))])
+        
         x_max_main=np.array([np.max(contours_main[j][:,0,0]) for j in range(len(contours_main))])
 
         y_min_main=np.array([np.min(contours_main[j][:,0,1]) for j in range(len(contours_main))])
         y_max_main=np.array([np.max(contours_main[j][:,0,1]) for j in range(len(contours_main))])
 
 
-        
+        print(x_min_from_argmin,'x_min_from_argmin')
+        print(x_min_main,'x_min_main')
         #dis_x=np.abs(x_max_main-x_min_main)
         
-        return cx_main,cy_main ,x_min_main , x_max_main, y_min_main ,y_max_main
+        return cx_main,cy_main ,x_min_main , x_max_main, y_min_main ,y_max_main,y_corr_x_min_from_argmin
     def return_points_with_boundies(self,peaks_neg_fin,first_point, last_point):
         peaks_neg_tot=[]
         peaks_neg_tot.append(first_point)
@@ -4122,7 +4137,7 @@ class sbb_newspapers:
         ret, thresh = cv2.threshold(imgray, 0, 255, 0)
         contours_cross,_=cv2.findContours(thresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
         
-        cx_cross,cy_cross ,_ , _, _ ,_=self.find_new_features_of_contoures(contours_cross)
+        cx_cross,cy_cross ,_ , _, _ ,_,_=self.find_new_features_of_contoures(contours_cross)
         
         for ii in range(len(cx_cross)):
             sep_ver_hor[int(cy_cross[ii])-15:int(cy_cross[ii])+15,int(cx_cross[ii])+5:int(cx_cross[ii])+40]=0
@@ -4305,7 +4320,7 @@ class sbb_newspapers:
         ret, thresh = cv2.threshold(imgray, 0, 255, 0)
         contours_cross,_=cv2.findContours(thresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
         
-        cx_cross,cy_cross ,_ , _, _ ,_=self.find_new_features_of_contoures(contours_cross)
+        cx_cross,cy_cross ,_ , _, _ ,_,_=self.find_new_features_of_contoures(contours_cross)
         
         for ii in range(len(cx_cross)):
             img_p_in[int(cy_cross[ii])-30:int(cy_cross[ii])+30,int(cx_cross[ii])+5:int(cx_cross[ii])+40,0]=0
@@ -5382,7 +5397,7 @@ class sbb_newspapers:
                 y_min_main_tab ,y_max_main_tab=self.find_features_of_contoures(contours_tab)
 
                 cx_tab_m_text,cy_tab_m_text ,x_min_tab_m_text , x_max_tab_m_text, y_min_tab_m_text ,y_max_tab_m_text=self.find_new_features_of_contoures(contours_table_m_text)
-                cx_tabl,cy_tabl ,x_min_tabl , x_max_tabl, y_min_tabl ,y_max_tabl=self.find_new_features_of_contoures(contours_tab)
+                cx_tabl,cy_tabl ,x_min_tabl , x_max_tabl, y_min_tabl ,y_max_tabl,_=self.find_new_features_of_contoures(contours_tab)
 
 
                 if len(y_min_main_tab )>0:
@@ -5583,6 +5598,11 @@ class sbb_newspapers:
         return img_revised_tab
     
     def order_of_regions(self,textline_mask,contours_main,contours_header, y_ref):
+        
+        ##plt.imshow(textline_mask)
+        ##plt.show()
+        """
+        print(len(contours_main),'contours_main')
         mada_n=textline_mask.sum(axis=1)
         y=mada_n[:]
 
@@ -5612,7 +5632,37 @@ class sbb_newspapers:
 
         peaks_neg=peaks_neg-20-20
         peaks=peaks-20
+        """
+    
+        textline_sum_along_width=textline_mask.sum(axis=1)
+        
+        y=textline_sum_along_width[:]
+        y_padded=np.zeros(len(y)+40)
+        y_padded[20:len(y)+20]=y
+        x=np.array( range(len(y)) )
 
+
+        peaks_real, _ = find_peaks(gaussian_filter1d(y, 3), height=0)
+        
+
+        sigma_gaus=8
+
+        z= gaussian_filter1d(y_padded, sigma_gaus)
+        zneg_rev=-y_padded+np.max(y_padded)
+
+        zneg=np.zeros(len(zneg_rev)+40)
+        zneg[20:len(zneg_rev)+20]=zneg_rev
+        zneg= gaussian_filter1d(zneg, sigma_gaus)
+
+
+        peaks, _ = find_peaks(z, height=0)
+        peaks_neg, _ = find_peaks(zneg, height=0)
+
+        peaks_neg=peaks_neg-20-20
+        peaks=peaks-20
+        
+        
+        print(peaks_neg,'peaks_neg')
         ##plt.plot(z)
         ##plt.show()
 
@@ -5640,8 +5690,22 @@ class sbb_newspapers:
             y_max_header=np.array([np.max(contours_header[j][:,0,1]) for j in range(len(contours_header))])
             #print(cy_main,'mainy')
 
-        #print(cy_main,'cyyyy')
-        #print(cx_main,'cxxxx')
+        peaks_neg_new=[]
+
+        peaks_neg_new.append(0+y_ref)
+        for iii in range(len(peaks_neg)):
+            peaks_neg_new.append(peaks_neg[iii]+y_ref)
+
+        peaks_neg_new.append(textline_mask.shape[0]+y_ref)
+        
+        print(cy_main,'cyyyyearly')
+        
+        if len(cy_main)>0 and np.max(cy_main)>np.max(peaks_neg_new):
+            cy_main=np.array(cy_main)*(np.max(peaks_neg_new)/np.max(cy_main) )-10
+
+        
+        print(cy_main,'cyyyy')
+        print(cx_main,'cxxxx')
 
 
         if contours_main!=None:
@@ -5672,17 +5736,11 @@ class sbb_newspapers:
         matrix_of_orders[len(contours_main):,4]=np.array( range( len(contours_header) ) )
 
 
-        peaks_neg_new=[]
-
-        peaks_neg_new.append(0+y_ref)
-        for iii in range(len(peaks_neg)):
-            peaks_neg_new.append(peaks_neg[iii]+y_ref)
-
-        peaks_neg_new.append(textline_mask.shape[0]+y_ref)
-        
-
 
         
+        #print(peaks_neg_new,'peaks_neg_new')
+
+        #print(matrix_of_orders,'matrix_of_orders')
         #print(peaks_neg_new,np.max(peaks_neg_new))
         final_indexers_sorted=[]
         final_types=[]
@@ -5690,6 +5748,8 @@ class sbb_newspapers:
         for i in range(len(peaks_neg_new)-1):
             top=peaks_neg_new[i]
             down=peaks_neg_new[i+1]
+            
+            #print(top,down,'topdown')
 
             indexes_in=matrix_of_orders[:,0][(matrix_of_orders[:,3]>=top) & ((matrix_of_orders[:,3]<down))]
             cxs_in=matrix_of_orders[:,2][(matrix_of_orders[:,3]>=top) & ((matrix_of_orders[:,3]<down))]
@@ -5716,6 +5776,7 @@ class sbb_newspapers:
         #print(peaks_neg_new,'peaks')
         #print(final_indexers_sorted,'indexsorted')
         #print(final_types,'types')
+        #print(final_index_type,'final_index_type')
 
         return final_indexers_sorted, matrix_of_orders,final_types,final_index_type
 
@@ -5738,14 +5799,22 @@ class sbb_newspapers:
         index_of_types_2=index_of_types[kind_of_texts==2]
         indexes_sorted_2=indexes_sorted[kind_of_texts==2]
         
-
+        ##print(index_of_types,'index_of_types')
+        ##print(kind_of_texts,'kind_of_texts')
+        ##print(len(found_polygons_text_region),'found_polygons_text_region')
+        ##print(index_of_types_1,'index_of_types_1')
+        ##print(indexes_sorted_1,'indexes_sorted_1')
         index_b=0+ref_point
         for mm in range(len(found_polygons_text_region)):
         
             id_of_texts.append('r'+str(index_b) )
             interest=indexes_sorted_1[indexes_sorted_1==index_of_types_1[mm] ]
-            order_of_texts.append(interest[0])
-            index_b+=1
+            
+            if len(interest)>0:
+                order_of_texts.append(interest[0])
+                index_b+=1
+            else:
+                pass
             
         for mm in range(len(found_polygons_text_region_h)):
             id_of_texts.append('r'+str(index_b) )
@@ -5754,6 +5823,8 @@ class sbb_newspapers:
             index_b+=1
                 
         return order_of_texts, id_of_texts
+    
+
     def get_text_region_boxes_by_given_contours(self,image_textline,contours,img_org):
 
         
@@ -5921,9 +5992,12 @@ class sbb_newspapers:
         
         ##plt.imshow(seperators_closeup_new)
         ##plt.show()
-        seperators_closeup_n
+        ##seperators_closeup_n
         vertical=np.repeat(vertical[:, :, np.newaxis], 3, axis=2)
         vertical=vertical.astype(np.uint8)
+        
+        
+
         imgray = cv2.cvtColor(vertical, cv2.COLOR_BGR2GRAY)
         ret, thresh = cv2.threshold(imgray, 0, 255, 0)
         
@@ -5941,6 +6015,9 @@ class sbb_newspapers:
         dist_y_ver=y_max_main_ver-y_min_main_ver
         len_y=seperators_closeup.shape[0]/3.0
         
+        
+        #plt.imshow(horizontal)
+        #plt.show()
         
         horizontal=np.repeat(horizontal[:, :, np.newaxis], 3, axis=2)
         horizontal=horizontal.astype(np.uint8)
@@ -6306,6 +6383,271 @@ class sbb_newspapers:
         x2 = x1 + int(wr)
         return rotated[y1:y2, x1:x2],rotated_textline[y1:y2, x1:x2]
     
+    def get_regions_from_xy_2models_ens(self,img):
+        img_org=np.copy(img)
+        
+        img_height_h=img_org.shape[0]
+        img_width_h=img_org.shape[1]
+        
+        model_region, session_region = self.start_new_session_and_model(self.model_region_dir_p_ens)
+        
+        
+        gaussian_filter=False
+        patches=False
+        binary=False
+        
+        ratio_x=1
+        ratio_y=1
+        img= self.resize_image(img_org, int(img_org.shape[0]*ratio_y), int(img_org.shape[1]*ratio_x))
+
+        prediction_regions_long=self.do_prediction(patches,img,model_region)
+        
+        prediction_regions_long=self.resize_image(prediction_regions_long, img_height_h, img_width_h )
+        
+        
+        gaussian_filter=False
+        patches=True
+        binary=False
+        
+        
+        
+
+        ratio_x=1
+        ratio_y=1.2
+        median_blur=False
+        
+        img= self.resize_image(img_org, int(img_org.shape[0]*ratio_y), int(img_org.shape[1]*ratio_x))
+        
+        if binary:
+            img = self.otsu_copy_binary(img)#self.otsu_copy(img)
+            img = img.astype(np.uint16)
+            
+        if median_blur:
+            img=cv2.medianBlur(img,5)
+        if gaussian_filter:
+            img= cv2.GaussianBlur(img,(5,5),0)
+            img = img.astype(np.uint16)
+        prediction_regions_org_y=self.do_prediction(patches,img,model_region)
+        
+        prediction_regions_org_y=self.resize_image(prediction_regions_org_y, img_height_h, img_width_h )
+        
+        #plt.imshow(prediction_regions_org[:,:,0])
+        #plt.show()
+        #sys.exit()
+        prediction_regions_org_y=prediction_regions_org_y[:,:,0]
+        
+        
+        mask_zeros_y=(prediction_regions_org_y[:,:]==0)*1
+        
+        
+        
+        
+        
+        
+        ratio_x=1.2
+        ratio_y=1
+        median_blur=False
+        
+        img= self.resize_image(img_org, int(img_org.shape[0]*ratio_y), int(img_org.shape[1]*ratio_x))
+        
+        if binary:
+            img = self.otsu_copy_binary(img)#self.otsu_copy(img)
+            img = img.astype(np.uint16)
+            
+        if median_blur:
+            img=cv2.medianBlur(img,5)
+        if gaussian_filter:
+            img= cv2.GaussianBlur(img,(5,5),0)
+            img = img.astype(np.uint16)
+        prediction_regions_org=self.do_prediction(patches,img,model_region)
+        
+        prediction_regions_org=self.resize_image(prediction_regions_org, img_height_h, img_width_h )
+        
+        #plt.imshow(prediction_regions_org[:,:,0])
+        #plt.show()
+        #sys.exit()
+        prediction_regions_org=prediction_regions_org[:,:,0]
+        
+        prediction_regions_org[(prediction_regions_org[:,:]==1) & (mask_zeros_y[:,:]==1)]=0
+        
+        
+        prediction_regions_org[( prediction_regions_long[:,:,0]==1 ) & (prediction_regions_org[:,:]==2) ]=1
+        
+        session_region.close()
+        del model_region
+        del session_region
+        gc.collect()
+        
+        
+ 
+
+        return prediction_regions_org
+    
+    def get_regions_from_xy_2models(self,img):
+        img_org=np.copy(img)
+        
+        img_height_h=img_org.shape[0]
+        img_width_h=img_org.shape[1]
+        
+        model_region, session_region = self.start_new_session_and_model(self.model_region_dir_p_ens)
+        
+        gaussian_filter=False
+        patches=True
+        binary=False
+        
+        
+        
+
+        ratio_x=1
+        ratio_y=1.3
+        median_blur=False
+        
+        img= self.resize_image(img_org, int(img_org.shape[0]*ratio_y), int(img_org.shape[1]*ratio_x))
+        
+        if binary:
+            img = self.otsu_copy_binary(img)#self.otsu_copy(img)
+            img = img.astype(np.uint16)
+            
+        if median_blur:
+            img=cv2.medianBlur(img,5)
+        if gaussian_filter:
+            img= cv2.GaussianBlur(img,(5,5),0)
+            img = img.astype(np.uint16)
+        prediction_regions_org_y=self.do_prediction(patches,img,model_region)
+        
+        prediction_regions_org_y=self.resize_image(prediction_regions_org_y, img_height_h, img_width_h )
+        
+        #plt.imshow(prediction_regions_org[:,:,0])
+        #plt.show()
+        #sys.exit()
+        prediction_regions_org_y=prediction_regions_org_y[:,:,0]
+        
+        
+        mask_zeros_y=(prediction_regions_org_y[:,:]==0)*1
+        
+        
+        
+        
+        
+        
+        ratio_x=1
+        ratio_y=1
+        median_blur=False
+        
+        img= self.resize_image(img_org, int(img_org.shape[0]*ratio_y), int(img_org.shape[1]*ratio_x))
+        
+        if binary:
+            img = self.otsu_copy_binary(img)#self.otsu_copy(img)
+            img = img.astype(np.uint16)
+            
+        if median_blur:
+            img=cv2.medianBlur(img,5)
+        if gaussian_filter:
+            img= cv2.GaussianBlur(img,(5,5),0)
+            img = img.astype(np.uint16)
+        prediction_regions_org=self.do_prediction(patches,img,model_region)
+        
+        prediction_regions_org=self.resize_image(prediction_regions_org, img_height_h, img_width_h )
+        
+        #plt.imshow(prediction_regions_org[:,:,0])
+        #plt.show()
+        #sys.exit()
+        prediction_regions_org=prediction_regions_org[:,:,0]
+        
+        prediction_regions_org[(prediction_regions_org[:,:]==1) & (mask_zeros_y[:,:]==1)]=0
+        session_region.close()
+        del model_region
+        del session_region
+        gc.collect()
+        
+        
+        model_region, session_region = self.start_new_session_and_model(self.model_region_dir_p2)
+        
+        gaussian_filter=False
+        patches=True
+        binary=False
+        
+        
+        
+
+        ratio_x=1
+        ratio_y=1
+        median_blur=False
+        
+        img= self.resize_image(img_org, int(img_org.shape[0]*ratio_y), int(img_org.shape[1]*ratio_x))
+        
+        if binary:
+            img = self.otsu_copy_binary(img)#self.otsu_copy(img)
+            img = img.astype(np.uint16)
+            
+        if median_blur:
+            img=cv2.medianBlur(img,5)
+        if gaussian_filter:
+            img= cv2.GaussianBlur(img,(5,5),0)
+            img = img.astype(np.uint16)
+        prediction_regions_org2=self.do_prediction(patches,img,model_region)
+        
+        prediction_regions_org2=self.resize_image(prediction_regions_org2, img_height_h, img_width_h )
+        
+        #plt.imshow(prediction_regions_org[:,:,0])
+        #plt.show()
+        #sys.exit()
+        ##prediction_regions_org=prediction_regions_org[:,:,0]
+        
+        session_region.close()
+        del model_region
+        del session_region
+        gc.collect()
+        
+        mask_zeros2=(prediction_regions_org2[:,:,0]==0)*1
+        mask_lines2=(prediction_regions_org2[:,:,0]==3)*1
+        
+        prediction_regions_org[(prediction_regions_org[:,:]==1) & (mask_zeros2[:,:]==1)]=0
+        
+        ##prediction_regions_org[mask_lines2[:,:]==1]=3
+        prediction_regions_org[(mask_lines2[:,:]==1) & (prediction_regions_org[:,:]==0)]=3
+        
+        mask_lines_only=(prediction_regions_org[:,:]==3)*1
+        
+        prediction_regions_org = cv2.erode(prediction_regions_org[:,:], self.kernel, iterations=2)
+        
+        #plt.imshow(text_region2_1st_channel)
+        #plt.show()
+        
+        prediction_regions_org = cv2.dilate(prediction_regions_org[:,:], self.kernel, iterations=2)
+        
+        mask_texts_only=(prediction_regions_org[:,:]==1)*1
+        
+        mask_images_only=(prediction_regions_org[:,:]==2)*1
+        
+        
+        
+        pixel_img=1
+        polygons_of_only_texts=self.return_contours_of_interested_region(mask_texts_only,pixel_img)
+        
+        polygons_of_only_images=self.return_contours_of_interested_region(mask_images_only,pixel_img)
+        
+        polygons_of_only_lines=self.return_contours_of_interested_region(mask_lines_only,pixel_img)
+        
+        
+        text_regions_p_true=np.zeros(prediction_regions_org.shape)
+        #text_regions_p_true[:,:]=text_regions_p_1[:,:]
+        
+        text_regions_p_true=cv2.fillPoly(text_regions_p_true,pts=polygons_of_only_lines, color=(3,3,3))
+        
+        ##text_regions_p_true=cv2.fillPoly(text_regions_p_true,pts=polygons_of_only_images, color=(2,2,2))
+        text_regions_p_true[:,:][mask_images_only[:,:]==1]=2
+        
+        text_regions_p_true=cv2.fillPoly(text_regions_p_true,pts=polygons_of_only_texts, color=(1,1,1))
+        
+        ##print(np.unique(text_regions_p_true))
+        
+        
+        #text_regions_p_true_3d=np.repeat(text_regions_p_1[:, :, np.newaxis], 3, axis=2)
+        #text_regions_p_true_3d=text_regions_p_true_3d.astype(np.uint8)
+        
+
+        return text_regions_p_true
     def run(self):
         
         #get image and sclaes, then extract the page of scanned image
@@ -6339,11 +6681,19 @@ class sbb_newspapers:
         
         ##text_regions_p=self.deskew_region_prediction(text_regions_p,slope_first)
         
-        text_regions_p_1=self.get_regions_from_xy(image_page_rotated)
+        ####text_regions_p_1=self.get_regions_from_xy(image_page_rotated)
+        text_regions_p_1=self.get_regions_from_xy_2models(self.image)
+        
+        ##text_regions_p_1=self.get_regions_from_xy_2models_ens(self.image)
         
         #text_regions_p_1=self.deskew_region_prediction(text_regions_p_1,textline_mask_tot,slope_first)
         
         ##textline_mask_tot=self.deskew_region_prediction(textline_mask_tot,slope_first)
+        
+        
+        
+        ##plt.imshow(text_regions_p_1)
+        ##plt.show()
 
         mask_images=(text_regions_p_1[:,:]==2)*1
         mask_lines=(text_regions_p_1[:,:]==3)*1
@@ -6402,12 +6752,14 @@ class sbb_newspapers:
 
         num_col,peaks_neg_fin,matrix_of_lines_ch,spliter_y_new,seperators_closeup_n=self.find_number_of_columns_in_document(np.repeat(text_regions_p[:, :, np.newaxis], 3, axis=2))
         
-        ##print(peaks_neg_fin,num_col,'num_col2')
+        #print(peaks_neg_fin,num_col,'num_col2')
         
         
         boxes=self.return_boxes_of_images_by_order_of_reading_new(spliter_y_new,regions_without_seperators,matrix_of_lines_ch)
         
-        ##print(len(boxes),'boxes')
+        #print(len(boxes),'boxes')
+        
+        #sys.exit()
         img_revised_tab=text_regions_p[:,:]
         
 
@@ -6419,6 +6771,8 @@ class sbb_newspapers:
 
         text_only=( (img_revised_tab[:,:]==1) )*1
         ##text_only_h=( (img_revised_tab[:,:,0]==2) )*1
+        
+        print(text_only.shape,'textonlyshape')
         
         contours_only_text,hir_on_text=self.return_contours_of_image(text_only)
         contours_only_text_parent=self.return_parent_contours( contours_only_text,hir_on_text)
@@ -6474,99 +6828,200 @@ class sbb_newspapers:
             cnt_clean_rot=self.textline_contours_postprocessing(all_text_region_raw,slopes[jj],contours_only_text_parent[jj],boxes_text[jj])
             all_found_texline_polygons.append(cnt_clean_rot)
 
-        cx_text_only,cy_text_only ,x_min_text_only, _, _ ,_=self.find_new_features_of_contoures(contours_only_text_parent)
+        cx_text_only,cy_text_only ,x_min_text_only, _, _ ,_,y_cor_x_min_main=self.find_new_features_of_contoures(contours_only_text_parent)
         boxes_arr=np.array(boxes)
-
-        arg_text_con=[]
-        for ii in range(len(cx_text_only)):
-            for jj in range(len(boxes)):
-                #print(x_min_text_only[ii]+30,boxes[jj][1],boxes[jj][2])
-                #if cx_text_only[ii] >=boxes[jj][0] and cx_text_only[ii] < boxes[jj][1] and cy_text_only[ii] >=boxes[jj][2] and cy_text_only[ii] < boxes[jj][3]:#this is valid if the center of region identify in which box it is located
-                if (x_min_text_only[ii]+80) >=boxes[jj][0] and (x_min_text_only[ii]+80) < boxes[jj][1] and cy_text_only[ii] >=boxes[jj][2] and cy_text_only[ii] < boxes[jj][3]:#this is valid if the min of region(in x direction) identify in which box it is located
-                    arg_text_con.append(jj)
-                    break
-        arg_arg_text_con=np.argsort(arg_text_con)
-        args_contours=np.array(range( len(arg_text_con)) )
-
-
-        
-        order_by_con_main=np.zeros(len(arg_text_con))
-        ###order_by_con_head=np.zeros(len(arg_text_con_h))
-
-        ref_point=0
-        order_of_texts_tot=[]
-        id_of_texts_tot=[]
-        for iij in range(len(boxes)):
-
-            args_contours_box=args_contours[np.array(arg_text_con)==iij]
-            
-            ###print(args_contours_box,'args_contours_box')
-            ##args_contours_box_h=args_contours_h[np.array(arg_text_con_h)==iij]
-            con_inter_box=[]
-            con_inter_box_h=[]
-
-            for i in range(len(args_contours_box)):
-
-                con_inter_box.append( contours_only_text_parent[args_contours_box[i] ]  )
-            #for i in range(len(args_contours_box_h)):
-
-                #con_inter_box_h.append( contours_only_text_parent_h[args_contours_box_h[i] ]  )
-                
-                
-            indexes_sorted, matrix_of_orders,kind_of_texts_sorted,index_by_kind_sorted=self.order_of_regions(textline_mask_tot[int(boxes[iij][2]):int(boxes[iij][3]), int(boxes[iij][0]):int(boxes[iij][1])],con_inter_box,con_inter_box_h,boxes[iij][2])
-            
-
-                
-            
-            order_of_texts, id_of_texts=self.order_and_id_of_texts(con_inter_box ,con_inter_box_h,matrix_of_orders ,indexes_sorted ,index_by_kind_sorted, kind_of_texts_sorted, ref_point)
-            
-            
-            indexes_sorted_main=np.array(indexes_sorted)[np.array(kind_of_texts_sorted)==1]
-            indexes_by_type_main=np.array(index_by_kind_sorted)[np.array(kind_of_texts_sorted)==1]
-            indexes_sorted_head=np.array(indexes_sorted)[np.array(kind_of_texts_sorted)==2]
-            indexes_by_type_head=np.array(index_by_kind_sorted)[np.array(kind_of_texts_sorted)==2]
-            
-
-            
-            
-            zahler=0
-            for mtv in args_contours_box:
-                arg_order_v=indexes_sorted_main[zahler]
-                tartib=np.where(indexes_sorted==arg_order_v )[0][0]
-                order_by_con_main[ args_contours_box[indexes_by_type_main[zahler] ]]=tartib+ref_point
-                zahler=zahler+1
-
-                
-            
-            for jji in range(len(id_of_texts)):
-                
-                
-                #order_of_texts_tot.append(args_contours_box_ordered[jji])
-                order_of_texts_tot.append(order_of_texts[jji]+ref_point)
-                id_of_texts_tot.append(id_of_texts[jji])
-            ref_point=ref_point+len(id_of_texts)
-
-
-        for i in range(0):#(len(order_of_texts_tot)):
-            img_con=np.zeros(seperators_closeup_n[:,:,0].shape)
-
-            img_con=cv2.fillPoly(img_con, pts =[contours_only_text_parent[order_of_texts_tot[i] ] ] , color=(255,255,255))
-
         
         
-        order_of_texts_tot=[]
-        #id_of_texts_tot=[]
-        for tj1 in range(len(contours_only_text_parent)):
-            order_of_texts_tot.append(int(order_by_con_main[tj1] ))
-            #id_of_texts_tot.append('r'+str(int(order_by_con_main[tj1] )))
-        ###for tj1 in range(len(contours_only_text_parent_h)):
-            ###order_of_texts_tot.append(int(order_by_con_head[tj1]) )
-            ####id_of_texts_tot.append('r'+str(int(order_by_con_head[tj1] )))
+        try:
+            arg_text_con=[]
+            for ii in range(len(cx_text_only)):
+                for jj in range(len(boxes)):
+                    #print(x_min_text_only[ii]+30,boxes[jj][1],boxes[jj][2])
+                    if (x_min_text_only[ii]+80) >=boxes[jj][0] and (x_min_text_only[ii]+80) < boxes[jj][1] and y_cor_x_min_main[ii] >=boxes[jj][2] and y_cor_x_min_main[ii] < boxes[jj][3]:
+                    ##if cx_text_only[ii] >=boxes[jj][0] and cx_text_only[ii] < boxes[jj][1] and cy_text_only[ii] >=boxes[jj][2] and cy_text_only[ii] < boxes[jj][3]:#this is valid if the center of region identify in which box it is located
+                    ##if (x_min_text_only[ii]+80) >=boxes[jj][0] and (x_min_text_only[ii]+80) < boxes[jj][1] and cy_text_only[ii] >=boxes[jj][2] and cy_text_only[ii] < boxes[jj][3]:#this is valid if the min of region(in x direction) identify in which box ##it is located
+                        arg_text_con.append(jj)
+                        break
+            arg_arg_text_con=np.argsort(arg_text_con)
+            args_contours=np.array(range( len(arg_text_con)) )
+
+            print(len(arg_text_con),len(cx_text_only),'len(arg_text_con)')
             
-        order_text_new=[]
-        for iii in range(len(order_of_texts_tot)):
-            tartib_new=np.where(np.array(order_of_texts_tot)==iii)[0][0]
-            order_text_new.append(tartib_new)
+            order_by_con_main=np.zeros(len(arg_text_con))
+            ###order_by_con_head=np.zeros(len(arg_text_con_h))
+
+            ref_point=0
+            order_of_texts_tot=[]
+            id_of_texts_tot=[]
+            for iij in range(len(boxes)):
+
+                args_contours_box=args_contours[np.array(arg_text_con)==iij]
+                
+                ###print(args_contours_box,'args_contours_box')
+                ##args_contours_box_h=args_contours_h[np.array(arg_text_con_h)==iij]
+                con_inter_box=[]
+                con_inter_box_h=[]
+
+                for i in range(len(args_contours_box)):
+
+                    con_inter_box.append( contours_only_text_parent[args_contours_box[i] ]  )
+                #for i in range(len(args_contours_box_h)):
+
+                    #con_inter_box_h.append( contours_only_text_parent_h[args_contours_box_h[i] ]  )
+                    
+                print(textline_mask_tot.shape,'textlineshape')
+                indexes_sorted, matrix_of_orders,kind_of_texts_sorted,index_by_kind_sorted=self.order_of_regions(textline_mask_tot[int(boxes[iij][2]):int(boxes[iij][3]), int(boxes[iij][0]):int(boxes[iij][1])],con_inter_box,con_inter_box_h,boxes[iij][2])
+                
+
+                    
+                
+                order_of_texts, id_of_texts=self.order_and_id_of_texts(con_inter_box ,con_inter_box_h,matrix_of_orders ,indexes_sorted ,index_by_kind_sorted, kind_of_texts_sorted, ref_point)
+                
+                
+                indexes_sorted_main=np.array(indexes_sorted)[np.array(kind_of_texts_sorted)==1]
+                indexes_by_type_main=np.array(index_by_kind_sorted)[np.array(kind_of_texts_sorted)==1]
+                indexes_sorted_head=np.array(indexes_sorted)[np.array(kind_of_texts_sorted)==2]
+                indexes_by_type_head=np.array(index_by_kind_sorted)[np.array(kind_of_texts_sorted)==2]
+                
+
+                
+                
+                zahler=0
+                for mtv in args_contours_box:
+                    arg_order_v=indexes_sorted_main[zahler]
+                    tartib=np.where(indexes_sorted==arg_order_v )[0][0]
+                    order_by_con_main[ args_contours_box[indexes_by_type_main[zahler] ]]=tartib+ref_point
+                    zahler=zahler+1
+
+                    
+                
+                for jji in range(len(id_of_texts)):
+                    
+                    
+                    #order_of_texts_tot.append(args_contours_box_ordered[jji])
+                    order_of_texts_tot.append(order_of_texts[jji]+ref_point)
+                    id_of_texts_tot.append(id_of_texts[jji])
+                ref_point=ref_point+len(id_of_texts)
+
+
+            for i in range(0):#(len(order_of_texts_tot)):
+                img_con=np.zeros(seperators_closeup_n[:,:,0].shape)
+
+                img_con=cv2.fillPoly(img_con, pts =[contours_only_text_parent[order_of_texts_tot[i] ] ] , color=(255,255,255))
+
+            
+            print(len(order_by_con_main),'order_by_con_main')
+            print(len(contours_only_text_parent),'contours_only_text_parent')
+            
+            order_of_texts_tot=[]
+            #id_of_texts_tot=[]
+            for tj1 in range(len(contours_only_text_parent)):
+                order_of_texts_tot.append(int(order_by_con_main[tj1] ))
+                #id_of_texts_tot.append('r'+str(int(order_by_con_main[tj1] )))
+            ###for tj1 in range(len(contours_only_text_parent_h)):
+                ###order_of_texts_tot.append(int(order_by_con_head[tj1]) )
+                ####id_of_texts_tot.append('r'+str(int(order_by_con_head[tj1] )))
+                
+            order_text_new=[]
+            for iii in range(len(order_of_texts_tot)):
+                tartib_new=np.where(np.array(order_of_texts_tot)==iii)[0][0]
+                order_text_new.append(tartib_new)
+            
+        except:
+            arg_text_con=[]
+            for ii in range(len(cx_text_only)):
+                for jj in range(len(boxes)):
+                    #print(x_min_text_only[ii]+30,boxes[jj][1],boxes[jj][2])
+                    #if (x_min_text_only[ii]) >=boxes[jj][0] and (x_min_text_only[ii]) < boxes[jj][1] and y_cor_x_min_main[ii] >=boxes[jj][2] and y_cor_x_min_main[ii] < boxes[jj][3]:
+                    if cx_text_only[ii] >=boxes[jj][0] and cx_text_only[ii] < boxes[jj][1] and cy_text_only[ii] >=boxes[jj][2] and cy_text_only[ii] < boxes[jj][3]:#this is valid if the center of region identify in which box it is located
+                    ##if (x_min_text_only[ii]+80) >=boxes[jj][0] and (x_min_text_only[ii]+80) < boxes[jj][1] and cy_text_only[ii] >=boxes[jj][2] and cy_text_only[ii] < boxes[jj][3]:#this is valid if the min of region(in x direction) identify in which box ##it is located
+                        arg_text_con.append(jj)
+                        break
+            arg_arg_text_con=np.argsort(arg_text_con)
+            args_contours=np.array(range( len(arg_text_con)) )
+
+            print(len(arg_text_con),len(cx_text_only),'len(arg_text_con)')
+            
+            order_by_con_main=np.zeros(len(arg_text_con))
+            ###order_by_con_head=np.zeros(len(arg_text_con_h))
+
+            ref_point=0
+            order_of_texts_tot=[]
+            id_of_texts_tot=[]
+            for iij in range(len(boxes)):
+
+                args_contours_box=args_contours[np.array(arg_text_con)==iij]
+                
+                ###print(args_contours_box,'args_contours_box')
+                ##args_contours_box_h=args_contours_h[np.array(arg_text_con_h)==iij]
+                con_inter_box=[]
+                con_inter_box_h=[]
+
+                for i in range(len(args_contours_box)):
+
+                    con_inter_box.append( contours_only_text_parent[args_contours_box[i] ]  )
+                #for i in range(len(args_contours_box_h)):
+
+                    #con_inter_box_h.append( contours_only_text_parent_h[args_contours_box_h[i] ]  )
+                    
+                print(textline_mask_tot.shape,'textlineshape')
+                indexes_sorted, matrix_of_orders,kind_of_texts_sorted,index_by_kind_sorted=self.order_of_regions(textline_mask_tot[int(boxes[iij][2]):int(boxes[iij][3]), int(boxes[iij][0]):int(boxes[iij][1])],con_inter_box,con_inter_box_h,boxes[iij][2])
+                
+
+                    
+                
+                order_of_texts, id_of_texts=self.order_and_id_of_texts(con_inter_box ,con_inter_box_h,matrix_of_orders ,indexes_sorted ,index_by_kind_sorted, kind_of_texts_sorted, ref_point)
+                
+                
+                indexes_sorted_main=np.array(indexes_sorted)[np.array(kind_of_texts_sorted)==1]
+                indexes_by_type_main=np.array(index_by_kind_sorted)[np.array(kind_of_texts_sorted)==1]
+                indexes_sorted_head=np.array(indexes_sorted)[np.array(kind_of_texts_sorted)==2]
+                indexes_by_type_head=np.array(index_by_kind_sorted)[np.array(kind_of_texts_sorted)==2]
+                
+
+                
+                
+                zahler=0
+                for mtv in args_contours_box:
+                    arg_order_v=indexes_sorted_main[zahler]
+                    tartib=np.where(indexes_sorted==arg_order_v )[0][0]
+                    order_by_con_main[ args_contours_box[indexes_by_type_main[zahler] ]]=tartib+ref_point
+                    zahler=zahler+1
+
+                    
+                
+                for jji in range(len(id_of_texts)):
+                    
+                    
+                    #order_of_texts_tot.append(args_contours_box_ordered[jji])
+                    order_of_texts_tot.append(order_of_texts[jji]+ref_point)
+                    id_of_texts_tot.append(id_of_texts[jji])
+                ref_point=ref_point+len(id_of_texts)
+
+
+            for i in range(0):#(len(order_of_texts_tot)):
+                img_con=np.zeros(seperators_closeup_n[:,:,0].shape)
+
+                img_con=cv2.fillPoly(img_con, pts =[contours_only_text_parent[order_of_texts_tot[i] ] ] , color=(255,255,255))
+
+            
+            print(len(order_by_con_main),'order_by_con_main')
+            print(len(contours_only_text_parent),'contours_only_text_parent')
+            
+            order_of_texts_tot=[]
+            #id_of_texts_tot=[]
+            for tj1 in range(len(contours_only_text_parent)):
+                order_of_texts_tot.append(int(order_by_con_main[tj1] ))
+                #id_of_texts_tot.append('r'+str(int(order_by_con_main[tj1] )))
+            ###for tj1 in range(len(contours_only_text_parent_h)):
+                ###order_of_texts_tot.append(int(order_by_con_head[tj1]) )
+                ####id_of_texts_tot.append('r'+str(int(order_by_con_head[tj1] )))
+                
+            order_text_new=[]
+            for iii in range(len(order_of_texts_tot)):
+                tartib_new=np.where(np.array(order_of_texts_tot)==iii)[0][0]
+                order_text_new.append(tartib_new)
+
 
         self.write_into_page_xml(contours_only_text_parent,page_coord,self.dir_out , order_text_new , id_of_texts_tot,all_found_texline_polygons,
                                  all_box_coord,polygons_of_images )
